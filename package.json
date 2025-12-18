@@ -1,0 +1,257 @@
+{
+  "name": "dev-soundtrack",
+  "displayName": "Dev Soundtrack",
+  "description": "🎵 Play epic background music and sound effects while coding. Hear epic drums on save, fanfares on successful builds, and customize your coding soundtrack!",
+  "version": "0.0.1",
+  "publisher": "Nicolas Butterfield",
+  "author": {
+    "name": "Nicolas Butterfield",
+    "email": "nicobutter@gmail.com"
+  },
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicobutter/dev-soundtrack"
+  },
+  "bugs": {
+    "url": "https://github.com/nicobutter/dev-soundtrack/issues"
+  },
+  "homepage": "https://github.com/nicobutter/dev-soundtrack#readme",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Themes"
+  ],
+  "keywords": [
+    "music",
+    "soundtrack",
+    "audio",
+    "sound effects",
+    "productivity",
+    "fun",
+    "epic",
+    "lo-fi",
+    "ambient"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "devSoundtrack.openPanel",
+        "title": "Open Music Panel",
+        "category": "Dev Soundtrack",
+        "icon": "$(unmute)"
+      },
+      {
+        "command": "devSoundtrack.play",
+        "title": "Play Music",
+        "category": "Dev Soundtrack",
+        "icon": "$(play)"
+      },
+      {
+        "command": "devSoundtrack.pause",
+        "title": "Pause Music",
+        "category": "Dev Soundtrack",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "devSoundtrack.stop",
+        "title": "Stop Music",
+        "category": "Dev Soundtrack",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "devSoundtrack.nextTrack",
+        "title": "Next Track",
+        "category": "Dev Soundtrack",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "devSoundtrack.previousTrack",
+        "title": "Previous Track",
+        "category": "Dev Soundtrack",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "devSoundtrack.toggleMute",
+        "title": "Toggle Mute",
+        "category": "Dev Soundtrack",
+        "icon": "$(mute)"
+      },
+      {
+        "command": "devSoundtrack.setMood",
+        "title": "Set Music Mood",
+        "category": "Dev Soundtrack"
+      },
+      {
+        "command": "devSoundtrack.playSoundEffect",
+        "title": "Play Sound Effect",
+        "category": "Dev Soundtrack"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "devSoundtrack.openPanel",
+        "key": "ctrl+alt+m",
+        "mac": "cmd+alt+m"
+      },
+      {
+        "command": "devSoundtrack.toggleMute",
+        "key": "ctrl+alt+0",
+        "mac": "cmd+alt+0"
+      },
+      {
+        "command": "devSoundtrack.play",
+        "key": "ctrl+alt+p",
+        "mac": "cmd+alt+p"
+      },
+      {
+        "command": "devSoundtrack.nextTrack",
+        "key": "ctrl+alt+right",
+        "mac": "cmd+alt+right"
+      },
+      {
+        "command": "devSoundtrack.previousTrack",
+        "key": "ctrl+alt+left",
+        "mac": "cmd+alt+left"
+      }
+    ],
+    "configuration": {
+      "title": "Dev Soundtrack",
+      "properties": {
+        "devSoundtrack.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable Dev Soundtrack"
+        },
+        "devSoundtrack.musicVolume": {
+          "type": "number",
+          "default": 50,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Volume level for background music (0-100)"
+        },
+        "devSoundtrack.effectsVolume": {
+          "type": "number",
+          "default": 70,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Volume level for sound effects (0-100)"
+        },
+        "devSoundtrack.currentMood": {
+          "type": "string",
+          "default": "epic",
+          "enum": [
+            "epic",
+            "lofi",
+            "synthwave",
+            "8bit",
+            "ambient",
+            "metal"
+          ],
+          "enumDescriptions": [
+            "Epic orchestral music for heroic coding sessions",
+            "Chill lo-fi beats to relax and code",
+            "Retro synthwave vibes",
+            "Classic 8-bit chiptune sounds",
+            "Calm ambient soundscapes",
+            "Heavy metal for intense debugging"
+          ],
+          "description": "Current music mood/genre"
+        },
+        "devSoundtrack.playOnStartup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start playing music when VS Code opens"
+        },
+        "devSoundtrack.soundEffects.onSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play sound effect when saving a file"
+        },
+        "devSoundtrack.soundEffects.onBuildSuccess": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play fanfare on successful build"
+        },
+        "devSoundtrack.soundEffects.onBuildError": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play dramatic sound on build error"
+        },
+        "devSoundtrack.soundEffects.onGitCommit": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play achievement sound on git commit"
+        },
+        "devSoundtrack.soundEffects.onUndo": {
+          "type": "boolean",
+          "default": false,
+          "description": "Play rewind sound on undo"
+        },
+        "devSoundtrack.soundEffects.onFileOpen": {
+          "type": "boolean",
+          "default": false,
+          "description": "Play sound when opening a file"
+        },
+        "devSoundtrack.customSoundsPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to folder with custom sound files"
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "devSoundtrack.openPanel",
+          "when": "true"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "devSoundtrack.toggleMute",
+          "group": "navigation",
+          "when": "devSoundtrack.isPlaying"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test",
+    "deploy": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.56.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  }
+}

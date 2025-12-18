@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Background -->
+  <rect width="128" height="128" rx="20" fill="#1e1e1e"/>
+  
+  <!-- Outer glow ring -->
+  <circle cx="64" cy="64" r="50" fill="none" stroke="#007acc" stroke-width="3" opacity="0.3"/>
+  
+  <!-- Main circle -->
+  <circle cx="64" cy="64" r="42" fill="none" stroke="#007acc" stroke-width="4"/>
+  
+  <!-- Sound waves -->
+  <path d="M85 50 Q95 64 85 78" fill="none" stroke="#4ec9b0" stroke-width="3" stroke-linecap="round"/>
+  <path d="M92 42 Q106 64 92 86" fill="none" stroke="#4ec9b0" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  <path d="M99 34 Q117 64 99 94" fill="none" stroke="#4ec9b0" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+  
+  <!-- Play button -->
+  <polygon points="52,42 52,86 82,64" fill="#007acc"/>
+  
+  <!-- Code bracket accent -->
+  <text x="20" y="105" font-family="monospace" font-size="24" fill="#4ec9b0" opacity="0.6">{</text>
+  <text x="98" y="105" font-family="monospace" font-size="24" fill="#4ec9b0" opacity="0.6">}</text>
+</svg>
