@@ -45,6 +45,24 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "devSoundtrack",
+          "title": "Dev Soundtrack",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "devSoundtrack": [
+        {
+          "type": "webview",
+          "id": "devSoundtrack.musicPanel",
+          "name": "Music Player"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "devSoundtrack.openPanel",

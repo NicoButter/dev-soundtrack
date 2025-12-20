@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { AudioPanel } from './panels/AudioPanel';
+import { MusicPanelProvider } from './panels/MusicPanelProvider';
 import { SoundEffectsManager } from './audio/SoundEffectsManager';
 import { CommandInterceptor } from './interceptors/CommandInterceptor';
 
@@ -9,6 +9,12 @@ let commandInterceptor: CommandInterceptor;
 export function activate(context: vscode.ExtensionContext) {
     console.log('🎵 Dev Soundtrack is now active!');
 
+    // Register the sidebar panel provider
+    const provider = new MusicPanelProvider(context.extensionUri);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider('devSoundtrack.musicPanel', provider)
+    );
+
     // Initialize managers
     soundEffectsManager = new SoundEffectsManager(context);
     commandInterceptor = new CommandInterceptor(context, soundEffectsManager);
@@ -17,14 +23,14 @@ export function activate(context: vscode.ExtensionContext) {
     const openPanelCommand = vscode.commands.registerCommand(
         'devSoundtrack.openPanel',
         () => {
-            AudioPanel.createOrShow(context.extensionUri);
+            vscode.commands.executeCommand('devSoundtrack.musicPanel.focus');
         }
     );
 
     const playCommand = vscode.commands.registerCommand(
         'devSoundtrack.play',
         () => {
-            AudioPanel.postMessage({ command: 'play' });
+            MusicPanelProvider.postMessage({ command: 'play' });
             vscode.window.showInformationMessage('🎵 Dev Soundtrack: Playing music');
         }
     );
@@ -32,7 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
     const pauseCommand = vscode.commands.registerCommand(
         'devSoundtrack.pause',
         () => {
-            AudioPanel.postMessage({ command: 'pause' });
+            MusicPanelProvider.postMessage({ command: 'pause' });
             vscode.window.showInformationMessage('⏸️ Dev Soundtrack: Paused');
         }
     );
@@ -40,7 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
     const stopCommand = vscode.commands.registerCommand(
         'devSoundtrack.stop',
         () => {
-            AudioPanel.postMessage({ command: 'stop' });
+            MusicPanelProvider.postMessage({ command: 'stop' });
             vscode.window.showInformationMessage('⏹️ Dev Soundtrack: Stopped');
         }
     );
@@ -48,21 +54,21 @@ export function activate(context: vscode.ExtensionContext) {
     const nextTrackCommand = vscode.commands.registerCommand(
         'devSoundtrack.nextTrack',
         () => {
-            AudioPanel.postMessage({ command: 'nextTrack' });
+            MusicPanelProvider.postMessage({ command: 'nextTrack' });
         }
     );
 
     const previousTrackCommand = vscode.commands.registerCommand(
         'devSoundtrack.previousTrack',
         () => {
-            AudioPanel.postMessage({ command: 'previousTrack' });
+            MusicPanelProvider.postMessage({ command: 'previousTrack' });
         }
     );
 
     const toggleMuteCommand = vscode.commands.registerCommand(
         'devSoundtrack.toggleMute',
         () => {
-            AudioPanel.postMessage({ command: 'toggleMute' });
+            MusicPanelProvider.postMessage({ command: 'toggleMute' });
         }
     );
 
@@ -85,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (selected) {
                 const config = vscode.workspace.getConfiguration('devSoundtrack');
                 await config.update('currentMood', selected.value, vscode.ConfigurationTarget.Global);
-                AudioPanel.postMessage({ command: 'setMood', mood: selected.value });
+                MusicPanelProvider.postMessage({ command: 'setMood', mood: selected.value });
                 vscode.window.showInformationMessage(`🎵 Mood set to: ${selected.label}`);
             }
         }
@@ -134,8 +140,8 @@ export function activate(context: vscode.ExtensionContext) {
     if (config.get<boolean>('playOnStartup')) {
         // Delay to ensure everything is loaded
         setTimeout(() => {
-            AudioPanel.createOrShow(context.extensionUri);
-            AudioPanel.postMessage({ command: 'play' });
+            vscode.commands.executeCommand('devSoundtrack.musicPanel.focus');
+            MusicPanelProvider.postMessage({ command: 'play' });
         }, 2000);
     }
 

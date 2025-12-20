@@ -8,14 +8,16 @@ export class AudioPanel {
     private readonly _extensionUri: vscode.Uri;
     private _disposables: vscode.Disposable[] = [];
 
-    public static createOrShow(extensionUri: vscode.Uri): void {
+    public static createOrShow(extensionUri: vscode.Uri, silentMode: boolean = false): void {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
 
-        // If we already have a panel, show it
+        // If we already have a panel, show it (unless silent mode)
         if (AudioPanel.currentPanel) {
-            AudioPanel.currentPanel._panel.reveal(column);
+            if (!silentMode) {
+                AudioPanel.currentPanel._panel.reveal(column);
+            }
             return;
         }
 
@@ -23,7 +25,7 @@ export class AudioPanel {
         const panel = vscode.window.createWebviewPanel(
             AudioPanel.viewType,
             '🎵 Dev Soundtrack',
-            column || vscode.ViewColumn.One,
+            silentMode ? vscode.ViewColumn.Beside : (column || vscode.ViewColumn.One),
             {
                 enableScripts: true,
                 retainContextWhenHidden: true, // Keep audio playing when panel is hidden
@@ -34,6 +36,11 @@ export class AudioPanel {
         );
 
         AudioPanel.currentPanel = new AudioPanel(panel, extensionUri);
+        
+        // If in silent mode, hide it in the background
+        if (silentMode) {
+            // Panel stays in background, user can open it later with Ctrl+Alt+M
+        }
     }
 
     public static postMessage(message: object): void {
@@ -605,9 +612,6 @@ export class AudioPanel {
             metal: { baseFreq: 110, tempo: 160, scale: [0, 1, 3, 5, 6, 8, 10] }
         };
 
-        let musicInterval = null;
-        let currentNoteIndex = 0;
-
         // DOM Elements
         const playBtn = document.getElementById('playBtn');
         const prevBtn = document.getElementById('prevBtn');
@@ -666,19 +670,52 @@ export class AudioPanel {
             return moodConfig.baseFreq * Math.pow(2, (semitone + octave * 12) / 12);
         }
 
-        // Play generated music
+        // Play generated music with Web Audio API scheduling (doesn't pause when losing focus)
+        let nextNoteTime = 0;
+        let animationFrameId = null;
+        let lastUpdateTime = 0;
+        let startTime = 0;
+
         function playMusic() {
-            if (musicInterval) {
-                clearInterval(musicInterval);
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
             }
 
             const moodConfig = moods[currentMood];
-            const noteLength = 60000 / moodConfig.tempo / 2;
-
-            musicInterval = setInterval(() => {
-                if (!isPlaying || isMuted) return;
-
-                // Generate a simple melody
+            nextNoteTime = audioContext.currentTime;
+            startTime = audioContext.currentTime;
+            
+            // Schedule notes ahead of time using requestAnimationFrame
+            function scheduleNotes() {
+                if (!isPlaying) {
+                    return;
+                }
+                
+                const moodConfig = moods[currentMood];
+                const noteLength = 60 / moodConfig.tempo / 2; // in seconds
+                
+                // Schedule notes up to 200ms ahead
+                while (nextNoteTime < audioContext.currentTime + 0.2) {
+                    scheduleNote(nextNoteTime, noteLength);
+                    nextNoteTime += noteLength;
+                }
+                
+                // Update progress periodically
+                const now = Date.now();
+                if (now - lastUpdateTime > 100) {
+                    playTime = audioContext.currentTime - startTime;
+                    updateProgress();
+                    lastUpdateTime = now;
+                }
+                
+                // Continue scheduling
+                animationFrameId = requestAnimationFrame(scheduleNotes);
+            }
+            
+            function scheduleNote(time, duration) {
+                if (isMuted) return;
+                
+                const moodConfig = moods[currentMood];
                 const degree = Math.floor(Math.random() * moodConfig.scale.length * 2);
                 const freq = getFrequency(currentMood, degree);
                 
@@ -688,20 +725,30 @@ export class AudioPanel {
                 else if (currentMood === 'synthwave') waveType = 'sawtooth';
                 else if (currentMood === 'metal') waveType = 'sawtooth';
                 else if (currentMood === 'epic') waveType = 'triangle';
-
-                playNote(freq, noteLength / 1000, waveType);
                 
-                // Update progress
-                playTime += noteLength / 1000;
-                updateProgress();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
                 
-            }, noteLength);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = freq;
+                oscillator.type = waveType;
+                gainNode.gain.value = 0.1 * musicVolume;
+                
+                oscillator.start(time);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, time + duration);
+                oscillator.stop(time + duration);
+            }
+            
+            // Start scheduling immediately
+            scheduleNotes();
         }
 
         function stopMusic() {
-            if (musicInterval) {
-                clearInterval(musicInterval);
-                musicInterval = null;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
             }
         }
 
@@ -910,6 +957,17 @@ export class AudioPanel {
                         playMusic();
                     }
                     updateUI();
+                    break;
+                case 'playEffect':
+                    // Play sound effect from external trigger (e.g., Ctrl+S)
+                    console.log('🎵 Webview received playEffect:', message.effect);
+                    effectsVolume = message.volume || effectsVolume;
+                    if (soundEffects[message.effect]) {
+                        console.log('✅ Playing effect:', message.effect);
+                        soundEffects[message.effect]();
+                    } else {
+                        console.error('❌ Effect not found:', message.effect);
+                    }
                     break;
             }
         });
