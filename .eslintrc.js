@@ -31,5 +31,5 @@ module.exports = {
     'no-throw-literal': 'warn',
     'semi': 'off'
   },
-  ignorePatterns: ['out', 'dist', '**/*.d.ts', 'webpack.config.js']
+  ignorePatterns: ['out', 'dist', '**/*.d.ts', 'webpack.config.js', '.eslintrc.js']
 };
