@@ -8,7 +8,7 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
-        context: vscode.WebviewViewResolveContext,
+        _context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken,
     ) {
         this._view = webviewView;
@@ -21,6 +21,8 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
             ]
         };
 
+        // Solo configurar el HTML si está vacío o es la primera vez
+        // Esto evita que se recree el reproductor al cambiar de vista
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
         // Handle messages from the webview
@@ -29,7 +31,7 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
                 case 'alert':
                     vscode.window.showInformationMessage(message.text);
                     return;
-                case 'updateVolume':
+                case 'updateVolume': {
                     const config = vscode.workspace.getConfiguration('devSoundtrack');
                     if (message.type === 'music') {
                         config.update('musicVolume', message.value, vscode.ConfigurationTarget.Global);
@@ -37,6 +39,7 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
                         config.update('effectsVolume', message.value, vscode.ConfigurationTarget.Global);
                     }
                     return;
+                }
                 case 'updateMood':
                     vscode.workspace.getConfiguration('devSoundtrack')
                         .update('currentMood', message.mood, vscode.ConfigurationTarget.Global);
@@ -312,11 +315,15 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
         const vscode = acquireVsCodeApi();
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
-        let isPlaying = false;
-        let isMuted = false;
-        let currentMood = document.querySelector('.mood-btn.active')?.dataset.mood || 'epic';
-        let musicVolume = parseInt(document.getElementById('musicVolume').value) / 100;
-        let effectsVolume = parseInt(document.getElementById('effectsVolume').value) / 100;
+        // Restaurar estado previo si existe
+        const previousState = vscode.getState() || {};
+        
+        let isPlaying = previousState.isPlaying || false;
+        let isMuted = previousState.isMuted || false;
+        let currentMood = previousState.currentMood || document.querySelector('.mood-btn.active')?.dataset.mood || 'epic';
+        let musicVolume = previousState.musicVolume || parseInt(document.getElementById('musicVolume').value) / 100;
+        let effectsVolume = previousState.effectsVolume || parseInt(document.getElementById('effectsVolume').value) / 100;
+        let currentTrackIndex = previousState.currentTrackIndex || 0;
 
         const moods = {
             epic: { baseFreq: 220, tempo: 120, scale: [0, 2, 3, 5, 7, 8, 10] },
@@ -336,9 +343,20 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
             metal: ['Code Crusher', 'Debug Fury', 'Merge Conflict']
         };
 
-        let currentTrackIndex = 0;
         let nextNoteTime = 0;
         let animationFrameId = null;
+
+        // Función para guardar el estado
+        function saveState() {
+            vscode.setState({
+                isPlaying,
+                isMuted,
+                currentMood,
+                musicVolume,
+                effectsVolume,
+                currentTrackIndex
+            });
+        }
 
         function getFrequency(mood, degree) {
             const moodConfig = moods[mood];
@@ -412,33 +430,39 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
             if (isPlaying) playMusic();
             else stopMusic();
             updateUI();
+            saveState();
             vscode.postMessage({ command: 'playStateChanged', isPlaying });
         });
 
         document.getElementById('prevBtn').addEventListener('click', () => {
             currentTrackIndex = Math.max(0, currentTrackIndex - 1);
             updateUI();
+            saveState();
         });
 
         document.getElementById('nextBtn').addEventListener('click', () => {
             currentTrackIndex++;
             updateUI();
+            saveState();
         });
 
         document.getElementById('muteBtn').addEventListener('click', () => {
             isMuted = !isMuted;
             updateUI();
+            saveState();
         });
 
         document.getElementById('musicVolume').addEventListener('input', (e) => {
             musicVolume = e.target.value / 100;
             document.getElementById('musicVolumeValue').textContent = e.target.value + '%';
+            saveState();
             vscode.postMessage({ command: 'updateVolume', type: 'music', value: parseInt(e.target.value) });
         });
 
         document.getElementById('effectsVolume').addEventListener('input', (e) => {
             effectsVolume = e.target.value / 100;
             document.getElementById('effectsVolumeValue').textContent = e.target.value + '%';
+            saveState();
             vscode.postMessage({ command: 'updateVolume', type: 'effects', value: parseInt(e.target.value) });
         });
 
@@ -453,6 +477,7 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
                     playMusic();
                 }
                 updateUI();
+                saveState();
                 vscode.postMessage({ command: 'updateMood', mood: currentMood });
             });
         });
@@ -466,6 +491,7 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
                         isPlaying = true;
                         playMusic();
                         updateUI();
+                        saveState();
                     }
                     break;
                 case 'pause':
@@ -473,10 +499,12 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
                     isPlaying = false;
                     stopMusic();
                     updateUI();
+                    saveState();
                     break;
                 case 'toggleMute':
                     isMuted = !isMuted;
                     updateUI();
+                    saveState();
                     break;
                 case 'playEffect':
                     console.log('Playing effect:', message.effect);
@@ -485,6 +513,11 @@ export class MusicPanelProvider implements vscode.WebviewViewProvider {
             }
         });
 
+        // Restaurar el estado de reproducción si estaba sonando
+        if (isPlaying) {
+            playMusic();
+        }
+        
         updateUI();
         `;
     }

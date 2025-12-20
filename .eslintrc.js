@@ -1,5 +1,8 @@
 module.exports = {
   root: true,
+  env: {
+    node: true
+  },
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2022,
@@ -19,6 +22,10 @@ module.exports = {
       }
     ],
     '@typescript-eslint/semi': 'warn',
+    '@typescript-eslint/no-unused-vars': ['warn', { 
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_'
+    }],
     'curly': 'warn',
     'eqeqeq': 'warn',
     'no-throw-literal': 'warn',
